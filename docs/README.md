@@ -1,6 +1,27 @@
 # EmailGist 📧✨
 
-Tired of sifting through long emails? EmailGist uses advanced AI to automatically summarize your messages, giving you the key information at a glance. Save time, improve focus, and get straight to what matters.
+## Problem Statement
+
+**The Problem**: Professionals are overwhelmed by lengthy emails containing critical information buried in verbose text. Long-form business communications, client updates, and project threads lead to missed deadlines, overlooked action items, and decision paralysis as people struggle to quickly identify what's important.
+
+**The Solution**: EmailGist transforms lengthy emails into actionable insights using AI-powered summarization and intelligent highlighting.
+
+**Target Users**: 
+- Busy executives and managers dealing with email overload
+- Project coordinators tracking multiple client communications
+- Sales professionals managing prospect conversations
+- Anyone who regularly receives lengthy, information-dense emails
+
+## Why I'm Building This
+
+I'm proving that **modern NLP can make email management effortless without sacrificing important context**. This project demonstrates:
+
+- **Technical Mastery**: Full-stack AI application with production-ready deployment
+- **Real Value Creation**: Solving a genuine productivity pain point experienced by millions
+- **Scalable Architecture**: Building systems that can handle enterprise-level email volumes
+- **User-Centric Design**: Creating intuitive interfaces that encourage daily adoption
+
+This isn't just another summarization tool—it's a productivity multiplier that gives time back to professionals.
 
 ## Features
 
@@ -137,13 +158,45 @@ MIN_LENGTH=50
 - **Supported email length**: Up to 10,000 characters
 - **Accuracy**: 90%+ key information retention
 
-## Roadmap
+## Development Roadmap
 
-- [ ] Email integration (Gmail, Outlook)
-- [ ] Batch processing for multiple emails
-- [ ] Custom summary length options
-- [ ] Mobile app development
-- [ ] Multi-language support
+| Week | Focus Area | Deliverables | Success Metrics |
+|------|------------|--------------|-----------------|
+| **Week 1** | Foundation & Core NLP | • FastAPI backend with BART/T5 integration<br>• Basic summarization endpoint<br>• Initial React frontend scaffold | • API responds in <3s<br>• 85%+ summary accuracy on test emails |
+| **Week 2** | Smart Highlighting & UX | • spaCy NER integration<br>• Entity highlighting (dates, names, actions)<br>• Polished Tailwind UI with animations | • Identifies 90%+ of key entities<br>• Clean, responsive interface |
+| **Week 3** | Performance & Polish | • Caching layer for repeat summaries<br>• Email parsing improvements<br>• Error handling & edge cases | • <2s response time<br>• Handles 10k+ character emails |
+| **Week 4** | Deployment & Demo | • Vercel + Render deployment<br>• Production optimizations<br>• Demo preparation & testing | • 99.9% uptime<br>• Ready for live demonstrations |
+
+## Demo Deliverables
+
+**Live Application**: Fully deployed, production-ready web app
+- **URL**: [emailgist.vercel.app](https://emailgist.vercel.app) *(planned)*
+- **Demo Dataset**: 20+ real business email examples with varying lengths/complexity
+- **Performance Dashboard**: Live metrics showing processing times and accuracy
+
+**Technical Showcase**:
+- **GitHub Repository**: Complete source code with comprehensive documentation
+- **API Documentation**: Interactive Swagger/FastAPI docs
+- **Architecture Diagram**: Visual representation of the full tech stack
+- **Video Walkthrough**: 3-minute demo highlighting key features and use cases
+
+**Measurable Results**:
+- **Time Savings**: Demonstrate significant reduction in email processing time
+- **Accuracy Metrics**: Show high key information retention in summaries
+- **User Experience**: Smooth, fast end-to-end workflow
+
+## My Commitment
+
+**I am building EmailGist to prove that AI can meaningfully improve daily productivity for knowledge workers.** This project represents my dedication to:
+
+✅ **Shipping real value**, not just tech demos  
+✅ **Mastering full-stack AI development** from NLP to deployment  
+✅ **Creating products people actually want to use** every day  
+✅ **Building with production-quality standards** from day one  
+
+**Success Definition**: By the end of 4 weeks, EmailGist will be a polished, deployed application that demonstrably saves users significant time while maintaining the context and nuance that makes business communication effective.
+
+I'm not just learning to code—I'm learning to build products that matter.
 
 ## License
 
