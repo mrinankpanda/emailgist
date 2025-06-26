@@ -3,124 +3,43 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "emailgist-backend"
+name = "emailgist"
 version = "1.0.0"
 description = "AI-powered email summarization and highlighting service"
 authors = [
     { name = "Your Name", email = "your.email@example.com" }
 ]
-readme = "README.md"
+readme = "docs/README.md"
 license = { text = "MIT" }
-requires-python = ">=3.8"
+requires-python = ">=3.11, <3.12"
 keywords = ["email", "ai", "summarization", "nlp", "productivity"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Communications :: Email",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-# All required dependencies
 dependencies = [
-    # FastAPI and ASGI server
     "fastapi==0.104.1",
     "uvicorn[standard]==0.24.0",
-    # Core dependencies
     "pydantic==2.5.0",
     "python-multipart==0.0.6",
-    # AI/NLP dependencies
     "transformers==4.35.2",
     "torch==2.1.1",
     "spacy==3.7.2",
-    # Utility dependencies
     "requests==2.31.0",
     "python-dotenv==1.0.0",
-    # Development dependencies
     "pytest==7.4.3",
     "httpx==0.25.2",
 ]
 
-[project.urls]
-Homepage = "https://github.com/yourusername/emailgist"
-Repository = "https://github.com/yourusername/emailgist.git"
-Issues = "https://github.com/yourusername/emailgist/issues"
-Documentation = "https://emailgist.vercel.app/docs"
-
 [project.scripts]
-emailgist-server = "main:main"
+emailgist-server = "backend.main:main"
 
-# Ruff configuration (Python linter/formatter)
-[tool.ruff]
-target-version = "py38"
-line-length = 88
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
-]
-ignore = [
-    "E501",  # line too long, handled by black
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
-]
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
 
-# Black configuration (Python formatter)
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-# MyPy configuration (Type checking)
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-# Pytest configuration
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--verbose",
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-]
+# You can add linters, formatters, and test configs below if you want
