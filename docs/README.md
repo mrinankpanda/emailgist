@@ -25,10 +25,10 @@ This isn't just another summarization tool—it's a productivity multiplier that
 
 ## Features
 
-- **AI-Powered Summarization**: Leverages state-of-the-art NLP models to extract key information from lengthy emails
-- **Smart Highlighting**: Automatically identifies and highlights important entities, dates, and action items
-- **Clean Interface**: Modern, responsive design built with React and Tailwind CSS
-- **Fast Processing**: Optimized backend for quick email analysis and summarization
+* **Summarization API**: `/summarize` endpoint that generates brief, useful summaries of email text
+* **Highlight Extraction**: Returns dummy highlights (soon powered by spaCy)
+* **Health Check Endpoint**: Quickly verify server status and uptime
+* **FastAPI Docs**: Auto-generated Swagger UI for easy API testing
 
 ## Tech Stack
 
@@ -37,175 +37,89 @@ This isn't just another summarization tool—it's a productivity multiplier that
 - **Tailwind CSS** - Utility-first CSS framework for styling
 
 ### Backend
-- **FastAPI** - High-performance Python web framework
-- **Python** - Core backend language
 
-### NLP Engine
-- **HuggingFace Transformers** - BART/T5 models for text summarization
-- **spaCy** - Named Entity Recognition (NER) for content highlighting
-- **Regex** - Pattern matching for entity extraction
+* **FastAPI** – Async Python web framework
+* **Python 3.11** – Primary language/runtime
+* **Uvicorn** – ASGI server for running the app
 
-### Deployment
-- **Vercel** - Frontend hosting and deployment
-- **Render** - Backend API hosting
+### NLP Tools (Planned/Stubbed)
 
-## Getting Started
+* **HuggingFace Transformers** – Summarization (coming soon)
+* **spaCy** – NER for highlights (next phase)
+* **Regex** – Lightweight entity matching
 
-### Prerequisites
-- Node.js (v16 or higher)
-- Python 3.8+
-- pip or poetry for Python package management
+## How to Use It (Backend Only)
 
-### Installation
+### 1. Clone the Repo
 
-#### Frontend Setup
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/emailgist.git
-cd emailgist/frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+cd emailgist/backend
 ```
 
-#### Backend Setup
+### 2. Set Up Python Environment
+
 ```bash
-# Navigate to backend directory
-cd ../backend
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+### 3. Run the API Server
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Start the server
+```bash
 uvicorn main:app --reload
 ```
 
-## Usage
+### 4. Visit Swagger Docs
 
-1. **Paste Your Email**: Copy and paste your long email content into the input field
-2. **Get Summary**: Click "Summarize" to generate an AI-powered summary
-3. **Review Highlights**: Important entities, dates, and action items are automatically highlighted
-4. **Save Time**: Get the key information without reading the entire email
+[http://localhost:8000/docs](http://localhost:8000/docs)
+
+Try the `/summarize` endpoint with JSON input like:
+
+```json
+{
+  "email_content": "Hi team, please finalize the budget by Friday. We have a client review on Monday."
+}
+```
 
 ## API Endpoints
 
+### `GET /`
+
+Basic health message.
+
+### `GET /health`
+
+Full status report with service name and timestamp.
+
 ### `POST /summarize`
-Generates a summary of the provided email content.
 
-**Request Body:**
-```json
-{
-  "email_content": "Your email content here..."
-}
-```
-
-**Response:**
-```json
-{
-  "summary": "AI-generated summary...",
-  "highlights": ["entity1", "entity2", "date1"],
-  "processing_time": 1.23
-}
-```
-
-## Configuration
-
-### Environment Variables
-
-#### Frontend (.env.local)
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-#### Backend (.env)
-```
-HUGGINGFACE_API_KEY=your_hf_api_key_here
-MODEL_NAME=facebook/bart-large-cnn
-MAX_LENGTH=150
-MIN_LENGTH=50
-```
-
-## Deployment
-
-### Frontend (Vercel)
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Backend (Render)
-1. Connect your GitHub repository to Render
-2. Configure environment variables
-3. Deploy as a web service
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Performance
-
-- **Average summarization time**: ~2-3 seconds
-- **Supported email length**: Up to 10,000 characters
-- **Accuracy**: 90%+ key information retention
-
-## Development Roadmap
-
-| Week | Focus Area | Deliverables | Success Metrics |
-|------|------------|--------------|-----------------|
-| **Week 1** | Foundation & Core NLP | • FastAPI backend with BART/T5 integration<br>• Basic summarization endpoint<br>• Initial React frontend scaffold | • API responds in <3s<br>• 85%+ summary accuracy on test emails |
-| **Week 2** | Smart Highlighting & UX | • spaCy NER integration<br>• Entity highlighting (dates, names, actions)<br>• Polished Tailwind UI with animations | • Identifies 90%+ of key entities<br>• Clean, responsive interface |
-| **Week 3** | Performance & Polish | • Caching layer for repeat summaries<br>• Email parsing improvements<br>• Error handling & edge cases | • <2s response time<br>• Handles 10k+ character emails |
-| **Week 4** | Deployment & Demo | • Vercel + Render deployment<br>• Production optimizations<br>• Demo preparation & testing | • 99.9% uptime<br>• Ready for live demonstrations |
-
-## Demo Deliverables
-
-**Live Application**: Fully deployed, production-ready web app
-- **URL**: [emailgist.vercel.app](https://emailgist.vercel.app) *(planned)*
-- **Demo Dataset**: 20+ real business email examples with varying lengths/complexity
-- **Performance Dashboard**: Live metrics showing processing times and accuracy
-
-**Technical Showcase**:
-- **GitHub Repository**: Complete source code with comprehensive documentation
-- **API Documentation**: Interactive Swagger/FastAPI docs
-- **Architecture Diagram**: Visual representation of the full tech stack
-- **Video Walkthrough**: 3-minute demo highlighting key features and use cases
-
-**Measurable Results**:
-- **Time Savings**: Demonstrate significant reduction in email processing time
-- **Accuracy Metrics**: Show high key information retention in summaries
-- **User Experience**: Smooth, fast end-to-end workflow
-
-## My Commitment
-
-**I am building EmailGist to prove that AI can meaningfully improve daily productivity for knowledge workers.** This project represents my dedication to:
-
-✅ **Shipping real value**, not just tech demos  
-✅ **Mastering full-stack AI development** from NLP to deployment  
-✅ **Creating products people actually want to use** every day  
-✅ **Building with production-quality standards** from day one  
-
-**Success Definition**: By the end of 4 weeks, EmailGist will be a polished, deployed application that demonstrably saves users significant time while maintaining the context and nuance that makes business communication effective.
-
-I'm not just learning to code—I'm learning to build products that matter.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you encounter any issues or have questions, please [open an issue](https://github.com/yourusername/emailgist/issues) on GitHub.
+Returns a dummy summary, highlights, and processing time.
 
 ---
 
-**Made with ❤️ for productivity enthusiasts**
+## Roadmap (Backend-First Approach)
+
+| Week   | Goals                                                                    |
+| ------ | ------------------------------------------------------------------------ |
+| Week 1 | ✅ Setup FastAPI server, define data models, build summarization endpoint |
+| Week 2 | 🛠 Add NLP logic (BART summarization, spaCy NER)                         |
+| Week 3 | ⚙️ Refactor, improve performance, add caching                            |
+| Week 4 | 🚀 Deploy backend to Render + connect frontend (React)                   |
+
+---
+
+## My Commitment
+
+I'm building EmailGist to:
+
+* ✅ Show that backend-focused projects can create real value
+* ✅ Sharpen my skills in full-stack AI engineering
+* ✅ Launch fast, iterate fast, and deliver utility from day one
+
+Even without a frontend, the API is working—and that’s already saving time.
+
+## License
+
+MIT License — see [LICENSE](LICENSE) file for details.
