@@ -122,4 +122,4 @@ Even without a frontend, the API is working—and that’s already saving time.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) file for details.
+Apache 2.0 License — see [LICENSE](LICENSE) file for details.
