@@ -1,5 +1,5 @@
 {
-  "name": "emailgist",
+  "name": "emailgist-frontend",
   "version": "0.1.0",
   "private": true,
   "description": "Transform lengthy emails into actionable insights using AI-powered summarization",
