@@ -49,7 +49,7 @@ async def summarize_email(request: EmailRequest):
     """
     start_time = time.time()
     # Validate that email content is not too short
-    if not request.email_content or len(request.email_content.strip()) < 10:
+    if not request.email_content or len(request.email_content.strip()) < 50:
         raise HTTPException(
             status_code=400,
             detail = "The content of your email must be at least 10 characters long."
