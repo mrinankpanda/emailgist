@@ -17,7 +17,7 @@ const EmailGist = () => {
             return;
         }
 
-        if (!emailContent.length < 50) {
+        if (emailContent.length < 50) {
             setError('Email content must be at least 50 characters long.');
             return;
         }
@@ -68,7 +68,7 @@ const EmailGist = () => {
         }
     };
 
-  return (
+return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -197,6 +197,6 @@ const EmailGist = () => {
       </div>
     </div>
   );
-}
+};
 
 export default EmailGist;
