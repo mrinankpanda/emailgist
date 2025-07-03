@@ -145,7 +145,36 @@ async def generate_summary(text: str) -> str:
     except Exception as e:
         logger.error(f"There was an error with summarization: {e}")
         return "There was an error with summarization."
+
+
+def extract_highlights(text: str) -> str:
+    """Extract the key highlights from the email"""
+    import re
+
+    highlights = []
+
+    date_pattern = r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
+    dates = re.findall(date_pattern, text, re.IGNORECASE)
+    highlights.extend(dates[:3]) # Limit to 3 dates
+
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    emails = re.findall(email_pattern, text)
+    highlights.extend(emails[:1])
+
+    name_pattern = r'\b[A-Z][a-z]+\s+[A-Z][a-z]+\b'
+    names = re.findall(name_pattern, text)
+    highlights.extend(names[:3])  # Limit to 3 names
     
+    money_pattern = r'\$[\d,]+(?:\.\d{2})?'
+    amounts = re.findall(money_pattern, text)
+    highlights.extend(amounts[:2])  # Limit to 2 amounts
+    
+    highlights = list(dict.fromkeys(highlights))[:8]
+    
+    if not highlights:
+        highlights = ["Email processed", "No specific highlights detected"]
+    
+    return highlights
 
 @app.get("/health")
 async def health_check():
