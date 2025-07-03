@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List
 import time
 import uvicorn
+import asyncio
 from contextlib import asynccontextmanager
 from transformers import pipeline
 import logging
@@ -125,6 +126,26 @@ async def summarize_email(request: EmailRequest):
             status_code = 500,
             detail = f"Error processing email: {str(e)}"
         )
+
+async def generate_summary(text: str) -> str:
+    """Generate summary using the AI model"""
+    try: 
+        loop = asyncio.get_event_loop()
+
+        def run_summarization():
+            result = summarizer(
+                text,
+                max_length = 250
+                min_length = 30
+                do_sample = False
+            )
+            return result[0]['summary_text']
+        summary = await loop.run_in_executor(None, run_summarization)
+        return f"📧 {summary}"
+    except Exception as e:
+        logger.error(f"There was an error with summarization: {e}")
+        return "There was an error with summarization."
+    
 
 @app.get("/health")
 async def health_check():
