@@ -57,7 +57,7 @@ app = FastAPI(
 # Enable CORS to allow requests from frontend during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://emailgist.com"],
+    allow_origins=["http://localhost:3000", "https://emailgist-lime.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
