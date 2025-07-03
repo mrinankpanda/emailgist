@@ -5,6 +5,46 @@ from pydantic import BaseModel
 from typing import List
 import time
 import uvicorn
+from contextlib import asynccontextmanager
+from transformers import pipeline
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+summarizer = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    models_to_try = [
+        "sshleifer/distilbart-cnn-12-6",  
+        "sshleifer/distilbart-cnn-6-6",  
+        "t5-small",                      
+        "facebook/bart-large-cnn"
+    ]
+
+    for models in models_to_try:
+        try:
+            logger.info(f"Trying to load model: {models}")
+            summarizer = pipeline (
+                "summarization",
+                model = models,
+                device = -1
+            )
+            logger.info(f"Model loaded successfully: {models}")
+            break
+        except Exception as e:
+            logger.warning(f"Failed to load {models}: {e}")
+            continue
+
+    if summarizer is None:
+        logger.error("All models failed to load!")
+    else:
+        logger.info("AI Summarization is ready!")
+    
+    yield
+    
+    logger.info("Shutting down...")
 
 # Initialize the FastAPI app with metadata
 app = FastAPI(
@@ -52,54 +92,39 @@ async def summarize_email(request: EmailRequest):
     if not request.email_content or len(request.email_content.strip()) < 50:
         raise HTTPException(
             status_code=400,
-            detail = "The content of your email must be at least 10 characters long."
+            detail = "The content of your email must be at least 50 characters long."
         )
     
-    # Dummy response - simulates the AI processing time
-    await simulate_processing_delay()
-
-    # Generate dummy summary based on the length of the email for now
-    email_length = len(request.email_content)
-    if (email_length > 1000):
-        summary = ("📧 Long email detected! Key points: Multiple topics discussed, "
-            "several action items identified, important deadlines mentioned. "
-            "This appears to be a comprehensive business communication requiring immediate attention.")
-    elif email_length > 500:
-        summary = (
-            "📧 Medium-length email summarized: Main topic covered with relevant details, "
-            "some action items present, moderate priority level indicated."
-        )
-    else:
-        summary = (
-            "📧 Brief email summary: Concise communication with clear purpose and "
-            "minimal action items required."
+    if summarizer is None:
+        raise HTTPException(
+            status_code = 503,
+            detail = "AI Model is not available. Please try again later."
         )
     
-    # Dummy highlights (normally extracted via NLP model)
-    dummy_highlights = [
-        "John Smith",
-        "Project Alpha", 
-        "December 15th",
-        "Budget approval",
-        "Client meeting"
-    ]
+    try:
+        text = request.email_content.strip()
+        max_length = 4000
+        if len(text) > max_length:
+            text = text[:max_length]
 
-    # Calculate the processing time
-    processing_time = time.time() - start_time
+        summary_result = await generate_summary(text)
 
-    #Return summary and highlights in structured response
-    return SummaryResponse (
-        summary = summary,
-        highlights = dummy_highlights,
-        processing_time = round (processing_time, 2)
-    )
+        highlights = extract_highlights(request.email_content)
 
-# Simulate processing time to mimic the actual AI model delay
-async def simulate_processing_delay():
-    """Simulate AI Processing Time"""
-    import asyncio
-    await asyncio(0.5) # Simulate 500ms delay
+        processing_time = time.time() - start_time
 
+        #Return summary and highlights in structured response
+        return SummaryResponse (
+            summary = summary_result,
+            highlights = highlights,
+            processing_time = round (processing_time, 2)
+        )
+    except Exception as e:
+        logger.error(f"Error during summarization: {e}")
+        raise HTTPException (
+            status_code = 500,
+            detail = f"Error processing email: {str(e)}"
+        )
 
 @app.get("/health")
 async def health_check():
