@@ -17,6 +17,7 @@ summarizer = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global summarizer
     models_to_try = [
         "sshleifer/distilbart-cnn-12-6",  
         "sshleifer/distilbart-cnn-6-6",  
@@ -52,12 +53,13 @@ app = FastAPI(
     title="emailgist API",
     description="AI-powered email summarization and highlighting service",
     version="1.0.0",
+    lifespan = lifespan
 )
 
 # Enable CORS to allow requests from frontend during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://emailgist-lime.vercel.app/"],
+    allow_origins=["http://localhost:3000", "https://emailgist-lime.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -135,8 +137,8 @@ async def generate_summary(text: str) -> str:
         def run_summarization():
             result = summarizer(
                 text,
-                max_length = 250
-                min_length = 30
+                max_length = 250,
+                min_length = 30,
                 do_sample = False
             )
             return result[0]['summary_text']
@@ -147,7 +149,7 @@ async def generate_summary(text: str) -> str:
         return "There was an error with summarization."
 
 
-def extract_highlights(text: str) -> str:
+def extract_highlights(text: str) -> List[str]:
     """Extract the key highlights from the email"""
     import re
 
