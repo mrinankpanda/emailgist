@@ -17,7 +17,7 @@ const EmailGist = () => {
             return;
         }
 
-        if (!emailContent.length < 50) {
+        if (emailContent.trim().length < 50) {
             setError('Email content must be at least 50 characters long.');
             return;
         }
