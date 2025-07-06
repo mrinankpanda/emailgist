@@ -134,19 +134,38 @@ async def generate_summary(text: str) -> str:
     try: 
         loop = asyncio.get_event_loop()
 
-        def run_summarization():
+        def run_summary_process():
+            input_length = len(text.split())
+            max_length = min(150, max(50, input_length // 4))
+            min_length = max(30, max_length // 3)
+
             result = summarizer(
                 text,
-                max_length = 250,
-                min_length = 30,
-                do_sample = False
+                max_length = max_length,
+                min_length = min_length,
+                do_sample = True,
+                temperature = 0.7,
+                num_beams = 4,
+                early_stopping = True,
+                no_repeat_ngram_size = 3,
+                length_penalty = 1.0
             )
             return result[0]['summary_text']
-        summary = await loop.run_in_executor(None, run_summarization)
-        return f"📧 {summary}"
+        
+        summary = await loop.run_in_executor(None, run_summary_process)
+        summary = summary.strip()
+
+        if summary.lower().startswith(('the email', 'this email', 'the message')):
+            sentences = summary.split('.')
+            if len(sentences) > 1:
+                summary = '.'.join(sentences[1:]).strip()
+        
+        return f"{summary}"
+    
     except Exception as e:
-        logger.error(f"There was an error with summarization: {e}")
-        return "There was an error with summarization."
+        logger.error(f"There was an error with the summarization process: {e}")
+        return "There was an error with the summarization process."
+
 
 
 def extract_highlights(text: str) -> List[str]:
