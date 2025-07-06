@@ -253,7 +253,7 @@ async def summarize_email(request: EmailRequest):
         )
     
     try:
-        text = email_preprocessing(text)
+        text = email_preprocessing(request.email_content.strip())
         max_length = 4000
         if len(text) > max_length:
             text = text[:max_length]
