@@ -105,28 +105,86 @@ def extract_highlights(text: str) -> List[str]:
     """Extract the key highlights from the email"""
     highlights = []
 
-    date_pattern = r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
-    dates = re.findall(date_pattern, text, re.IGNORECASE)
-    highlights.extend(dates[:3]) # Limit to 3 dates
+    # Filtering to find action words and phrases that indicate important content
+    action_patterns = [
+        r'\b(?:deadline|due|urgent|asap|immediately|schedule|meeting|call|review|approve|complete|finish|submit|send|deliver)\b',
+        r'\b(?:action item|next step|follow up|please|need to|must|should|required|important)\b',
+        r'\b(?:meeting|conference|call|appointment|interview)\s+(?:on|at|scheduled|planned)\b'
+    ]
 
+    # Do the search for action-oriented phrases
+    for pattern in action_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for match in matches:
+            highlights.append(f"{match.title()}")
+    
+    # Filtering to find any date patterns
+    date_patterns = [
+        r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}\b',
+        r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b',
+        r'\b(?:today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b',
+        r'\b(?:this|next)\s+(?:week|month|quarter|year)\b'
+    ]
+
+    for pattern in date_patterns:
+        dates = re.findall(pattern, text, re.IGNORECASE)
+        for date in dates:
+            highlights.append(date)
+
+    # Filtering and search for times
+    time_pattern = r'\b(?:1[0-2]|[1-9]):[0-5][0-9]\s*(?:AM|PM|am|pm)\b'
+    times = re.findall(time_pattern, text)
+    for time in times:
+        highlights.append(time)
+
+    # Filtering and search for money
+    money_patterns = [
+        r'\$[\d,]+(?:\.\d{2})?',
+        r'\b\d+(?:,\d{3})*(?:\.\d{2})?\s*(?:dollars?|USD|€|euros?|£|pounds?)\b',
+        r'\b\d{1,3}(?:,\d{3})*(?:\.\d+)?%\b'  # Percentages
+    ]
+
+    for pattern in money_patterns:
+        amounts = re.findall(pattern, text, re.IGNORECASE)
+        for amount in amounts:
+            highlights.append(amount)
+
+    # Filtering and searching for emails
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     emails = re.findall(email_pattern, text)
-    highlights.extend(emails[:1])
+    for email in emails:
+        highlights.append(email)
 
-    name_pattern = r'\b[A-Z][a-z]+\s+[A-Z][a-z]+\b'
+    phone_pattern = r'\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b'     
+    phones = re.findall(phone_pattern, text)
+    for phone in phones:
+        highlights.append(phone)   
+
+    # Filtering and searching for names
+    name_pattern = name_pattern = r'\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b'
     names = re.findall(name_pattern, text)
-    highlights.extend(names[:3])  # Limit to 3 names
+    # Filtering out some false positives that come up when searching for names
+    common_false_positives = {'Best Regards', 'Thank You', 'Please Let', 'Kind Regards', 'Sincerely'}
+    names = [name for name in names if name not in common_false_positives]
+    for name in names:
+        highlights.append(name)
     
-    money_pattern = r'\$[\d,]+(?:\.\d{2})?'
-    amounts = re.findall(money_pattern, text)
-    highlights.extend(amounts[:2])  # Limit to 2 amounts
-    
-    highlights = list(dict.fromkeys(highlights))[:8]
-    
-    if not highlights:
-        highlights = ["Email processed", "No specific highlights detected"]
-    
-    return highlights
+    # Filtering and searching for companies
+    company_pattern = r'\b[A-Z][a-z]+\s+(?:Inc|LLC|Corp|Corporation|Company|Group|Team|Department)\b'
+    companies = re.findall(company_pattern, text)
+    for company in companies:
+        highlights.append(company)
+
+    seen = set()
+    unique_highlights = []
+    for highlight in highlights:
+        if highlight not in seen:
+            seen.add(highlight)
+            unique_highlights.append(highlight)
+
+    unique_highlights = unique_highlights [:8]
+
+    return unique_highlights
 
 async def generate_summary(text: str) -> str:
     """Generate summary using the AI model"""
