@@ -77,7 +77,7 @@ class SummaryResponse(BaseModel):
     processing_time: float      # Time taken to process the request
 
 
-def email_preprocesing(text: str) -> str:
+def email_preprocessing(text: str) -> str:
     """Email cleanup for better summarization"""
 
     # This removes any of the headers ex. From:, To:, etc.
@@ -253,7 +253,7 @@ async def summarize_email(request: EmailRequest):
         )
     
     try:
-        text = email_preprocesing(text)
+        text = email_preprocessing(text)
         max_length = 4000
         if len(text) > max_length:
             text = text[:max_length]
