@@ -9,6 +9,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from transformers import pipeline
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -75,6 +76,153 @@ class SummaryResponse(BaseModel):
     highlights: List[str]       # Key extracted terms or highlights
     processing_time: float      # Time taken to process the request
 
+
+def email_preprocessing(text: str) -> str:
+    """Email cleanup for better summarization"""
+
+    # This removes any of the headers ex. From:, To:, etc.
+    text = re.sub(r'^(From|To|Subject|Date|Sent|Cc|Bcc):\s*.*$', '', text, flags=re.MULTILINE | re.IGNORECASE)
+
+    # This removes any forwarding indicators
+    text = re.sub(r'^(FW:|RE:|FWD:)', '', text, flags=re.MULTILINE | re.IGNORECASE)
+
+    # This removes the email signatures
+    text = re.sub(r'\n\s*--\s*\n.*$', '', text, flags=re.DOTALL)
+    text = re.sub(r'\n\s*Best regards?.*$', '', text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r'\n\s*Sincerely.*$', '', text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r'\n\s*Thanks?.*$', '', text, flags=re.DOTALL | re.IGNORECASE)
+    
+    # This removes any excessive whitespace
+    text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
+    text = re.sub(r'\s+', ' ', text)
+    
+    # This removes URLs
+    text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
+    
+    return text.strip()
+
+def extract_highlights(text: str) -> List[str]:
+    """Extract the key highlights from the email"""
+    highlights = []
+
+    # Filtering to find action words and phrases that indicate important content
+    action_patterns = [
+        r'\b(?:deadline|due|urgent|asap|immediately|schedule|meeting|call|review|approve|complete|finish|submit|send|deliver)\b',
+        r'\b(?:action item|next step|follow up|please|need to|must|should|required|important)\b',
+        r'\b(?:meeting|conference|call|appointment|interview)\s+(?:on|at|scheduled|planned)\b'
+    ]
+
+    # Do the search for action-oriented phrases
+    for pattern in action_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for match in matches:
+            highlights.append(f"{match.title()}")
+    
+    # Filtering to find any date patterns
+    date_patterns = [
+        r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}\b',
+        r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b',
+        r'\b(?:today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b',
+        r'\b(?:this|next)\s+(?:week|month|quarter|year)\b'
+    ]
+
+    for pattern in date_patterns:
+        dates = re.findall(pattern, text, re.IGNORECASE)
+        for date in dates:
+            highlights.append(date)
+
+    # Filtering and search for times
+    time_pattern = r'\b(?:1[0-2]|[1-9]):[0-5][0-9]\s*(?:AM|PM|am|pm)\b'
+    times = re.findall(time_pattern, text)
+    for time in times:
+        highlights.append(time)
+
+    # Filtering and search for money
+    money_patterns = [
+        r'\$[\d,]+(?:\.\d{2})?',
+        r'\b\d+(?:,\d{3})*(?:\.\d{2})?\s*(?:dollars?|USD|€|euros?|£|pounds?)\b',
+        r'\b\d{1,3}(?:,\d{3})*(?:\.\d+)?%\b'  # Percentages
+    ]
+
+    for pattern in money_patterns:
+        amounts = re.findall(pattern, text, re.IGNORECASE)
+        for amount in amounts:
+            highlights.append(amount)
+
+    # Filtering and searching for emails
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    emails = re.findall(email_pattern, text)
+    for email in emails:
+        highlights.append(email)
+
+    phone_pattern = r'\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b'     
+    phones = re.findall(phone_pattern, text)
+    for phone in phones:
+        highlights.append(phone)   
+
+    # Filtering and searching for names
+    name_pattern = name_pattern = r'\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b'
+    names = re.findall(name_pattern, text)
+    # Filtering out some false positives that come up when searching for names
+    common_false_positives = {'Best Regards', 'Thank You', 'Please Let', 'Kind Regards', 'Sincerely'}
+    names = [name for name in names if name not in common_false_positives]
+    for name in names:
+        highlights.append(name)
+    
+    # Filtering and searching for companies
+    company_pattern = r'\b[A-Z][a-z]+\s+(?:Inc|LLC|Corp|Corporation|Company|Group|Team|Department)\b'
+    companies = re.findall(company_pattern, text)
+    for company in companies:
+        highlights.append(company)
+
+    seen = set()
+    unique_highlights = []
+    for highlight in highlights:
+        if highlight not in seen:
+            seen.add(highlight)
+            unique_highlights.append(highlight)
+
+    unique_highlights = unique_highlights [:8]
+
+    return unique_highlights
+
+async def generate_summary(text: str) -> str:
+    """Generate summary using the AI model"""
+    try: 
+        loop = asyncio.get_event_loop()
+
+        def run_summary_process():
+            input_length = len(text.split())
+            max_length = min(150, max(50, input_length // 4))
+            min_length = max(30, max_length // 3)
+
+            result = summarizer(
+                text,
+                max_length = max_length,
+                min_length = min_length,
+                do_sample = True,
+                temperature = 0.7,
+                num_beams = 4,
+                early_stopping = True,
+                no_repeat_ngram_size = 3,
+                length_penalty = 1.0
+            )
+            return result[0]['summary_text']
+        
+        summary = await loop.run_in_executor(None, run_summary_process)
+        summary = summary.strip()
+
+        if summary.lower().startswith(('the email', 'this email', 'the message')):
+            sentences = summary.split('.')
+            if len(sentences) > 1:
+                summary = '.'.join(sentences[1:]).strip()
+        
+        return f"{summary}"
+    
+    except Exception as e:
+        logger.error(f"There was an error with the summarization process: {e}")
+        return "There was an error with the summarization process."
+
 # Root endpoint: Simple health check / welcome message
 @app.get("/")
 async def read_root():
@@ -105,7 +253,7 @@ async def summarize_email(request: EmailRequest):
         )
     
     try:
-        text = request.email_content.strip()
+        text = email_preprocessing(text)
         max_length = 4000
         if len(text) > max_length:
             text = text[:max_length]
@@ -128,55 +276,6 @@ async def summarize_email(request: EmailRequest):
             status_code = 500,
             detail = f"Error processing email: {str(e)}"
         )
-
-async def generate_summary(text: str) -> str:
-    """Generate summary using the AI model"""
-    try: 
-        loop = asyncio.get_event_loop()
-
-        def run_summarization():
-            result = summarizer(
-                text,
-                max_length = 250,
-                min_length = 30,
-                do_sample = False
-            )
-            return result[0]['summary_text']
-        summary = await loop.run_in_executor(None, run_summarization)
-        return f"📧 {summary}"
-    except Exception as e:
-        logger.error(f"There was an error with summarization: {e}")
-        return "There was an error with summarization."
-
-
-def extract_highlights(text: str) -> List[str]:
-    """Extract the key highlights from the email"""
-    import re
-
-    highlights = []
-
-    date_pattern = r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
-    dates = re.findall(date_pattern, text, re.IGNORECASE)
-    highlights.extend(dates[:3]) # Limit to 3 dates
-
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    emails = re.findall(email_pattern, text)
-    highlights.extend(emails[:1])
-
-    name_pattern = r'\b[A-Z][a-z]+\s+[A-Z][a-z]+\b'
-    names = re.findall(name_pattern, text)
-    highlights.extend(names[:3])  # Limit to 3 names
-    
-    money_pattern = r'\$[\d,]+(?:\.\d{2})?'
-    amounts = re.findall(money_pattern, text)
-    highlights.extend(amounts[:2])  # Limit to 2 amounts
-    
-    highlights = list(dict.fromkeys(highlights))[:8]
-    
-    if not highlights:
-        highlights = ["Email processed", "No specific highlights detected"]
-    
-    return highlights
 
 @app.get("/health")
 async def health_check():
