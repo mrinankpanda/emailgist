@@ -343,7 +343,7 @@ async def summarize_email(request: EmailRequest):
 
         summary_result = await generate_summary(text)
 
-        highlights = extract_highlights(request.email_content)
+        highlights, _ = extract_highlights(request.email_content)
 
         processing_time = time.time() - start_time
 
