@@ -300,7 +300,9 @@ async def generate_summary(text: str) -> str:
             if len(sentences) > 1:
                 summary = '.'.join(sentences[1:]).strip()
         
-        return f"{summary}"
+        summary = re.sub(r'\s+([.,!?])', r'\1', summary)
+
+        return summary
     
     except Exception as e:
         logger.error(f"There was an error with the summarization process: {e}")
