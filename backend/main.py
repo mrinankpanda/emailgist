@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Tuple
 import time
 import uvicorn
 import asyncio
@@ -10,15 +10,27 @@ from contextlib import asynccontextmanager
 from transformers import pipeline
 import logging
 import re
+import spacy
+import spacy.matcher import Matcher
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 summarizer = None
+nlp = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global summarizer
+    global summarizer, nlp, matcher
+
+    try:
+        logger.info("Loading spaCy model...")
+        nlp = spacy.load("en_core_web_sm")
+        logger.info("spaCy model loaded successfully")
+    except IOError:
+        logger.error("spaCy model 'en_core_web_sm' not found.")
+        nlp = None
+
     models_to_try = [
         "sshleifer/distilbart-cnn-12-6",  
         "sshleifer/distilbart-cnn-6-6",  
@@ -101,7 +113,78 @@ def email_preprocessing(text: str) -> str:
     
     return text.strip()
 
-def extract_highlights(text: str) -> List[str]:
+def extract_highlights(text: str) -> Tuple[List[str], List[dict]]:
+    """Extract key highlights using spaCy if available, otherwise fallback to regex"""
+    if nlp is None:
+        return extract_highlights_regex(text), []
+    else:
+        return extract_highlights_spacy(text)
+
+
+def extract_highlights_spacy(text: str) -> Tuple[List[str], List[dict]]:
+    highlights = []
+    entities_info = []
+
+    doc = nlp(text)
+    matcher = Matcher(nlp.vocab)
+
+    action_patterns = [
+        [{"LOWER": {"IN": ["deadline", "due", "urgent", "asap"]}}],
+        [{"LOWER": "action"}, {"LOWER": "item"}],
+        [{"LOWER": "follow"}, {"LOWER": "up"}],
+        [{"LOWER": "next"}, {"LOWER": "step"}],
+        [{"LOWER": {"IN": ["meeting", "call", "conference"]}}, {"LOWER": {"IN": ["on", "at", "scheduled"]}}]
+    ]
+
+    for i, pattern in enumerate(action_patterns):
+        matcher.add(f"ACTION_{i}", [pattern])
+    
+    for ent in doc.ents:
+        entity_info = {
+            "text": ent.text,
+            "label": ent.label_,
+            "description": spacy.explain(ent.label_),
+            "start": ent.start_char,
+            "end": ent.end_char
+        }
+        entities_info.append(entity_info)
+
+        if ent.label_ in ["PERSON", "ORG", "MONEY", "DATE", "TIME", "PERCENT"]:
+            highlights.append(ent.text)
+
+    matches = matcher(doc)
+    for _, start, end in matches:
+        span = doc[start:end]
+        highlights.append(span.text)
+
+    action_words = [
+        "deadline", "urgent", "asap", "meeting", "call", "schedule", 
+        "action", "follow", "complete", "submit", "review", "approve"
+    ]
+
+    for sent in doc.sents:
+        if any(word in sent.text.lower() for word in action_words):
+            for token in sent:
+                if token.pos_ in ["NOUN", "PROPN"] and len(token.text) > 3:
+                    highlights.append(token.text)
+    
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    highlights.extend(re.findall(email_pattern, text))
+
+    phone_pattern = r'\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b'
+    highlights.extend(re.findall(phone_pattern, text))
+
+    seen = set()
+    unique_highlights = []
+    for h in highlights:
+        if h.strip() and h not in seen:
+            seen.add(h)
+            unique_highlights.append(h)
+    
+    return unique_highlights, entities_info
+
+
+def extract_highlights_regex(text: str) -> List[str]:
     """Extract the key highlights from the email"""
     highlights = []
 
