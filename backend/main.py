@@ -11,7 +11,7 @@ from transformers import pipeline
 import logging
 import re
 import spacy
-import spacy.matcher import Matcher
+from spacy.matcher import Matcher
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
