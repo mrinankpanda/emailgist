@@ -25,63 +25,62 @@ This isn't just another summarization tool—it's a productivity multiplier that
 
 ## Features
 
-* **Summarization API**: `/summarize` endpoint that generates brief, useful summaries of email text
-* **Highlight Extraction**: Returns dummy highlights (soon powered by spaCy)
-* **Health Check Endpoint**: Quickly verify server status and uptime
-* **FastAPI Docs**: Auto-generated Swagger UI for easy API testing
+*   **AI-Powered Summarization**: The `/summarize` endpoint uses a HuggingFace Transformers model (DistilBART) to generate concise, meaningful summaries of long email texts.
+*   **Intelligent Highlight Extraction**: Automatically pulls out key entities like dates, names, organizations, and action items using spaCy for advanced NER. A regex-based fallback ensures key terms are always found.
+*   **Health Check Endpoints**: `GET /` and `GET /health` for easy service monitoring.
+*   **Interactive API Docs**: FastAPI provides a Swagger UI at `/docs` for easy testing and exploration.
 
 ## Tech Stack
 
 ### Frontend
-- **React** - Modern UI framework
-- **Tailwind CSS** - Utility-first CSS framework for styling
+- **React** - Modern UI framework for building the user interface.
+- **Vite** - High-performance build tool for frontend development.
+- **Tailwind CSS** - A utility-first CSS framework for rapid styling.
+- **Lucide-React** - Beautiful and consistent icons.
 
 ### Backend
+*   **FastAPI** – Asynchronous Python web framework for building the API.
+*   **Python 3.11** – The core language and runtime.
+*   **Uvicorn** – High-performance ASGI server.
+*   **HuggingFace Transformers** – State-of-the-art NLP library for summarization.
+*   **spaCy** – Industrial-strength NLP for Named Entity Recognition (NER) and highlighting.
+*   **Pydantic** – For robust data validation and settings management.
 
-* **FastAPI** – Async Python web framework
-* **Python 3.11** – Primary language/runtime
-* **Uvicorn** – ASGI server for running the app
-
-### NLP Tools (Planned/Stubbed)
-
-* **HuggingFace Transformers** – Summarization (coming soon)
-* **spaCy** – NER for highlights (next phase)
-* **Regex** – Lightweight entity matching
-
-## How to Use It (Backend Only)
+## How to Run Locally
 
 ### 1. Clone the Repo
 
 ```bash
 git clone https://github.com/yourusername/emailgist.git
-cd emailgist/backend
+cd emailgist
 ```
 
-### 2. Set Up Python Environment
+### 2. Set Up & Run the Backend
 
 ```bash
-uv venv .venv
+cd backend
+# Create and activate a virtual environment
+python3 -m venv .venv
 source .venv/bin/activate
-uv pip install -r requirements.txt
-```
-
-### 3. Run the API Server
-
-```bash
+# Install dependencies
+pip install -r requirements.txt
+# Run the API server
 uvicorn main:app --reload
 ```
+The backend will be running at `http://localhost:8000`.
 
-### 4. Visit Swagger Docs
+### 3. Set Up & Run the Frontend
 
-[http://localhost:8000/docs](http://localhost:8000/docs)
-
-Try the `/summarize` endpoint with JSON input like:
-
-```json
-{
-  "email_content": "Hi team, please finalize the budget by Friday. We have a client review on Monday."
-}
+In a new terminal:
+```bash
+cd frontend
+# Install dependencies
+npm install
+# Run the development server
+npm run dev
 ```
+The frontend will be running at `http://localhost:5173` and will connect to the backend automatically.
+
 
 ## API Endpoints
 
@@ -95,18 +94,18 @@ Full status report with service name and timestamp.
 
 ### `POST /summarize`
 
-Returns a dummy summary, highlights, and processing time.
+Accepts a JSON object with `email_content` and returns an AI-generated summary and a list of extracted highlights.
 
 ---
 
-## Roadmap (Backend-First Approach)
+## Roadmap
 
-| Week   | Goals                                                                    |
-| ------ | ------------------------------------------------------------------------ |
-| Week 1 | ✅ Setup FastAPI server, define data models, build summarization endpoint |
-| Week 2 | 🛠 Add NLP logic (BART summarization, spaCy NER)                         |
-| Week 3 | ⚙️ Refactor, improve performance, add caching                            |
-| Week 4 | 🚀 Deploy backend to Render + connect frontend (React)                   |
+| Week   | Goals                                                                    | Status |
+| ------ | ------------------------------------------------------------------------ | ------ |
+| Week 1 | Setup FastAPI server, define data models, build summarization endpoint | ✅ Done |
+| Week 2 | Add NLP logic (BART summarization, spaCy NER)                         | ✅ Done |
+| Week 3 | ⚙️ Refactor, improve performance, add caching                            | In Progress |
+| Week 4 | 🚀 Deploy backend to Render + connect frontend (React)                   | In Progress |
 
 ---
 
