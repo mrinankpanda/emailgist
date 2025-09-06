@@ -443,3 +443,12 @@ temp/
 package-lock.json
 yarn.lock
 # Keep: requirements.txt, pyproject.toml
+
+backend/data/
+
+backend/training/__pycache__
+backend/training/data
+backend/training/models
+backend/training/training_output
+
+backend/models/
