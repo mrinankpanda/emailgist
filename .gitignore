@@ -449,6 +449,6 @@ backend/data/
 backend/training/__pycache__
 backend/training/data
 backend/training/models
+backend/training_output
 backend/training/training_output
-
 backend/models/
